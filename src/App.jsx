@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import AudienceView from './views/AudienceView';
 import AdminDashboard from './views/AdminDashboard';
 import LivePresentationView from './views/LivePresentationView';
+import ProtectedWrapper from './components/ProtectedWrapper';
 
 export default function App() {
   return (
@@ -12,8 +13,22 @@ export default function App() {
       <div className="container">
         <Routes>
           <Route path="/" element={<AudienceView />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/live" element={<LivePresentationView />} />
+          <Route 
+            path="/admin" 
+            element={
+              <ProtectedWrapper title="כניסת מנהל">
+                <AdminDashboard />
+              </ProtectedWrapper>
+            } 
+          />
+          <Route 
+            path="/live" 
+            element={
+              <ProtectedWrapper title="כניסת מצגת בלייב">
+                <LivePresentationView />
+              </ProtectedWrapper>
+            } 
+          />
         </Routes>
       </div>
     </BrowserRouter>
