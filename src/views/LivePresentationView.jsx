@@ -9,32 +9,42 @@ export default function LivePresentationView() {
 
   // Subscribe to current presentation stage
   useEffect(() => {
-    const stageRef = doc(db, 'appState', 'presentation');
-    const unsubscribe = onSnapshot(stageRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setCurrentStage(docSnap.data().currentStage ?? 0);
-      }
-    }, (error) => {
-      console.error("Error subscribing to stage:", error);
-    });
+    let unsubscribe = () => {};
+    try {
+      const stageRef = doc(db, 'appState', 'presentation');
+      unsubscribe = onSnapshot(stageRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCurrentStage(docSnap.data().currentStage ?? 0);
+        }
+      }, (error) => {
+        console.error("Error subscribing to stage:", error);
+      });
+    } catch (e) {
+      console.error("Exception setting up stage listener:", e);
+    }
 
     return () => unsubscribe();
   }, []);
 
   // Subscribe to live responses feed
   useEffect(() => {
-    const responsesRef = collection(db, 'responses');
-    const q = query(responsesRef);
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      setResponses(docs);
-    }, (error) => {
-      console.error("Error subscribing to responses:", error);
-    });
+    let unsubscribe = () => {};
+    try {
+      const responsesRef = collection(db, 'responses');
+      const q = query(responsesRef);
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        setResponses(docs);
+      }, (error) => {
+        console.error("Error subscribing to responses:", error);
+      });
+    } catch (e) {
+      console.error("Exception setting up responses listener:", e);
+    }
 
     return () => unsubscribe();
   }, []);
@@ -72,11 +82,11 @@ export default function LivePresentationView() {
             <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               {activeStageInfo.title}
             </span>
-            <h1 style={{ fontSize: '2rem', color: '#0f172a', margin: '0.25rem 0 0 0' }}>
+            <h1 style={{ fontSize: '1.8rem', color: '#0f172a', margin: '0.35rem 0 0 0', whiteSpace: 'pre-line', lineHeight: '1.4' }}>
               {activeStageInfo.prompt}
             </h1>
           </div>
-          <div style={{ backgroundColor: '#0284c7', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '12px', textAlign: 'center' }}>
+          <div style={{ backgroundColor: '#0284c7', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '12px', textAlign: 'center', minWidth: '100px' }}>
             <div style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>{totalCount}</div>
             <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>תשובות להתקבלו</div>
           </div>

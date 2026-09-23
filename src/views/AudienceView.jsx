@@ -13,19 +13,24 @@ export default function AudienceView() {
 
   // Listen to active stage from Firestore
   useEffect(() => {
-    const stageRef = doc(db, 'appState', 'presentation');
-    const unsubscribe = onSnapshot(stageRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const newStage = docSnap.data().currentStage ?? 0;
-        setCurrentStage(newStage);
-        setSubmitted(false);
-        setSingleSelection(null);
-        setMultiSelection([]);
-        setTextInput('');
-      }
-    }, (err) => {
-      console.error("Error listening to stage:", err);
-    });
+    let unsubscribe = () => {};
+    try {
+      const stageRef = doc(db, 'appState', 'presentation');
+      unsubscribe = onSnapshot(stageRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const newStage = docSnap.data().currentStage ?? 0;
+          setCurrentStage(newStage);
+          setSubmitted(false);
+          setSingleSelection(null);
+          setMultiSelection([]);
+          setTextInput('');
+        }
+      }, (err) => {
+        console.error("Error listening to stage:", err);
+      });
+    } catch (e) {
+      console.error("Exception setting up stage listener:", e);
+    }
 
     return () => unsubscribe();
   }, []);
@@ -83,7 +88,7 @@ export default function AudienceView() {
         </span>
       </div>
 
-      <h2 style={{ fontSize: '1.4rem', color: '#0f172a', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+      <h2 style={{ fontSize: '1.35rem', color: '#0f172a', marginBottom: '1.5rem', lineHeight: '1.5', whiteSpace: 'pre-line' }}>
         {activeStage.prompt}
       </h2>
 
@@ -112,8 +117,8 @@ export default function AudienceView() {
       {/* Interactive Forms when not submitted & not waiting */}
       {!submitted && activeStage.type !== 'waiting' && (
         <div>
-          {/* Single Choice & Yes/No Card Buttons */}
-          {(activeStage.type === 'single_choice' || activeStage.type === 'yes_no') && (
+          {/* Single Choice Options */}
+          {activeStage.type === 'single_choice' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {activeStage.options.map((option, idx) => {
                 const isSelected = singleSelection === option;
@@ -137,7 +142,7 @@ export default function AudienceView() {
                       boxShadow: isSelected ? '0 4px 6px -1px rgba(2, 132, 199, 0.15)' : 'none',
                       display: 'flex',
                       alignItems: 'center',
-                      justify: 'space-between'
+                      justifyContent: 'space-between'
                     }}
                   >
                     <span style={{ flex: 1 }}>{option}</span>
@@ -159,6 +164,66 @@ export default function AudienceView() {
                 disabled={!singleSelection || isSubmitting}
                 style={{
                   marginTop: '1.25rem',
+                  padding: '0.9rem',
+                  backgroundColor: !singleSelection || isSubmitting ? '#94a3b8' : '#0284c7',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '1.05rem',
+                  fontWeight: '600',
+                  cursor: !singleSelection || isSubmitting ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+              >
+                {isSubmitting ? 'שולח...' : 'שלח תשובה'}
+              </button>
+            </div>
+          )}
+
+          {/* Yes / No Toggle Cards */}
+          {activeStage.type === 'yes_no' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                {activeStage.options.map((option, idx) => {
+                  const isSelected = singleSelection === option;
+                  const isYes = option === 'כן';
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => setSingleSelection(option)}
+                      style={{
+                        padding: '1.5rem 1rem',
+                        fontSize: '1.5rem',
+                        fontWeight: 'bold',
+                        textAlign: 'center',
+                        borderRadius: '12px',
+                        border: isSelected 
+                          ? (isYes ? '3px solid #16a34a' : '3px solid #dc2626') 
+                          : '1px solid #cbd5e1',
+                        backgroundColor: isSelected 
+                          ? (isYes ? '#f0fdf4' : '#fef2f2') 
+                          : '#ffffff',
+                        color: isSelected 
+                          ? (isYes ? '#15803d' : '#b91c1c') 
+                          : '#334155',
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isSelected ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none'
+                      }}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                disabled={!singleSelection || isSubmitting}
+                style={{
+                  marginTop: '1rem',
                   padding: '0.9rem',
                   backgroundColor: !singleSelection || isSubmitting ? '#94a3b8' : '#0284c7',
                   color: 'white',
@@ -201,7 +266,7 @@ export default function AudienceView() {
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      onChange={() => {}} // Handled by parent div
+                      onChange={() => {}}
                       disabled={isSubmitting}
                       style={{ width: '20px', height: '20px', accentColor: '#0284c7', cursor: 'pointer' }}
                     />
