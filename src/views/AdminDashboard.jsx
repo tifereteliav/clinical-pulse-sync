@@ -6,54 +6,73 @@ import { STAGES } from '../config/stages';
 export default function AdminDashboard() {
   const [currentStage, setCurrentStage] = useState(0);
   const [responses, setResponses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   // Subscribe to current presentation stage
   useEffect(() => {
-    const stageRef = doc(doc(db, 'appState', 'presentation'));
-    const unsubscribe = onSnapshot(doc(db, 'appState', 'presentation'), (docSnap) => {
-      if (docSnap.exists()) {
-        setCurrentStage(docSnap.data().currentStage ?? 0);
-      }
-    }, (error) => {
-      console.error("Error subscribing to stage:", error);
-    });
+    let unsubscribe = () => {};
+    try {
+      const stageRef = doc(db, 'appState', 'presentation');
+      unsubscribe = onSnapshot(stageRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCurrentStage(docSnap.data().currentStage ?? 0);
+        }
+        setLoading(false);
+      }, (error) => {
+        console.error("Error subscribing to stage:", error);
+        setErrorMsg("שגיאה בחיבור ל-Firestore stage");
+        setLoading(false);
+      });
+    } catch (err) {
+      console.error("Exception setting up stage listener:", err);
+      setErrorMsg(err.message);
+      setLoading(false);
+    }
 
     return () => unsubscribe();
   }, []);
 
   // Subscribe to live responses feed
   useEffect(() => {
-    const responsesRef = collection(db, 'responses');
-    const q = query(responsesRef);
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      setResponses(docs);
-    }, (error) => {
-      console.error("Error subscribing to responses:", error);
-    });
+    let unsubscribe = () => {};
+    try {
+      const responsesRef = collection(db, 'responses');
+      const q = query(responsesRef);
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data()
+        }));
+        docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        setResponses(docs);
+      }, (error) => {
+        console.error("Error subscribing to responses:", error);
+      });
+    } catch (err) {
+      console.error("Exception setting up responses listener:", err);
+    }
 
     return () => unsubscribe();
   }, []);
 
   const handleSetStage = async (stageId) => {
     try {
-      await setDoc(doc(db, 'appState', 'presentation'), { currentStage: stageId }, { merge: true });
+      const stageRef = doc(db, 'appState', 'presentation');
+      await setDoc(stageRef, { currentStage: stageId }, { merge: true });
       setCurrentStage(stageId);
     } catch (err) {
       console.error("Failed to update stage:", err);
+      alert("שגיאה בעדכון השלב ב-Firestore");
     }
   };
 
   const activeStageInfo = STAGES.find(s => s.id === currentStage) || STAGES[0];
   const stageResponses = responses.filter(r => r.stage === currentStage);
 
-  // Compute option counts for single_choice, yes_no, and multi_choice
+  // Compute option counts safely
   const computeOptionCounts = () => {
-    if (!activeStageInfo.options) return {};
+    if (!activeStageInfo?.options) return {};
     const counts = {};
     activeStageInfo.options.forEach(opt => counts[opt] = 0);
 
@@ -73,9 +92,23 @@ export default function AdminDashboard() {
   const optionCounts = computeOptionCounts();
   const totalSubmissions = stageResponses.length;
 
+  if (loading) {
+    return (
+      <div className="card" dir="rtl" style={{ textAlign: 'center', padding: '3rem' }}>
+        <div>⏳ טוען נתוני לוח בקרה...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="card" dir="rtl">
       <h2 style={{ marginBottom: '1.5rem', color: '#0f172a' }}>לוח בקרה - ניהול מצגת</h2>
+
+      {errorMsg && (
+        <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#991b1b', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+          {errorMsg}
+        </div>
+      )}
 
       <div style={{ marginBottom: '1.25rem', fontWeight: 'bold', fontSize: '1.1rem' }}>
         שלב נוכחי פעיל: <span style={{ color: '#0284c7' }}>{activeStageInfo.title}</span>
@@ -118,7 +151,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Aggregate Choice Results */}
-      {activeStageInfo.options && (
+      {activeStageInfo?.options && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '2rem' }}>
           {activeStageInfo.options.map((opt, idx) => {
             const count = optionCounts[opt] || 0;
