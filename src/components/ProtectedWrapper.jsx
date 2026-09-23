@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const CORRECT_PIN = '1234';
+const CORRECT_PIN = '1990';
 
 export default function ProtectedWrapper({ children, title = 'כניסה מוגנת' }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -30,7 +30,7 @@ export default function ProtectedWrapper({ children, title = 'כניסה מוג�
       <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🔒</div>
       <h2 style={{ marginBottom: '0.5rem' }}>{title}</h2>
       <p style={{ color: '#64748b', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-        אזור זה מוגן בסיסמה. אנא הזן קוד גישה (PIN) כדי להמשיך.
+        אזור זה מוגן בסיסמה. אנא הזן קוד גישה כדי להמשיך.
       </p>
 
       <form onSubmit={handleUnlock} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -41,7 +41,7 @@ export default function ProtectedWrapper({ children, title = 'כניסה מוג�
             setPinInput(e.target.value);
             if (error) setError('');
           }}
-          placeholder="הזן קוד גישה (1234)"
+          placeholder="הזן קוד גישה"
           maxLength={10}
           autoFocus
           style={{
