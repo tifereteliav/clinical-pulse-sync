@@ -23,3 +23,6 @@ firestore-debug.log
 Thumbs.db
 .vscode/
 .idea/
+
+# קבצי מוזיקה מקוריים שהורדו – לא עולים לאתר (נשארים רק lobby/question/podium.mp3)
+public/quiz/*-*.mp3

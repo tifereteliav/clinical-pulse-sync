@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { onSnapshot, setDoc, writeBatch, increment, serverTimestamp } from 'firebase/firestore';
+import { onSnapshot, setDoc, writeBatch, increment, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { stateRef, playerRef, answerRef, newId, loadPlayer, savePlayer } from '../quiz/api';
+import { stateRef, playerRef, playersCol, answerRef, newId, loadPlayer, savePlayer } from '../quiz/api';
 import { QUESTIONS, OPTION_STYLES, calcPoints, QUIZ_TITLE } from '../config/quiz';
 import '../quiz/quiz.css';
 
-function PlayerShell({ children, tone = 'default', player, me }) {
+function PlayerShell({ children, tone = 'default', player, me, bg }) {
   return (
-    <div className={`qp-shell qp-${tone}`} dir="rtl">
+    <div className={`qp-shell qp-${tone} ${bg ? 'qp-has-bg' : ''}`} dir="rtl"
+      style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
       <header className="qp-top">
         <img src="/logo.png" alt="" className="qp-logo" />
         {player && <div className="qp-me">{player.name}{me ? <b> · {me.score} נק׳</b> : null}</div>}
@@ -25,10 +26,12 @@ export default function QuizPlayer() {
   const [joining, setJoining] = useState(false);
   const [kicked, setKicked] = useState(false);
   const [error, setError] = useState('');
+  const [existing, setExisting] = useState(null); // שחקנית קיימת עם אותו שם (חזרה מהפסקה)
 
   // תשובה לשאלה הנוכחית
   const [answer, setAnswer] = useState(null);     // {q, option, correct, points}
   const [remaining, setRemaining] = useState(null);
+  const [openText, setOpenText] = useState('');
   const shownAt = useRef({ q: -1, t: 0 });
 
   // האזנה למצב החידון
@@ -97,25 +100,59 @@ export default function QuizPlayer() {
 
   const join = async (e) => {
     e.preventDefault();
-    const name = nameInput.trim().slice(0, 18);
+    const name = nameInput.trim().replace(/\s+/g, ' ').slice(0, 24);
     if (!name || !sid || joining) return;
     setJoining(true);
     setError('');
     try {
-      const id = newId();
-      await setDoc(playerRef(sid, id), {
-        id, name, score: 0, correctCount: 0, streak: 0, joinedAt: serverTimestamp()
-      });
-      const p = { id, name };
-      savePlayer(sid, p);
-      setPlayer(p);
-      setKicked(false);
-      if (navigator.vibrate) navigator.vibrate(60);
+      // חזרה מהפסקה: אם כבר יש שחקנית בשם הזה – מציעים להמשיך עם הניקוד שלה
+      const found = await getDocs(query(playersCol(sid), where('name', '==', name)));
+      if (!found.empty) {
+        setExisting(found.docs[0].data());
+        return;
+      }
+      await createPlayer(name);
     } catch (err) {
       console.error(err);
       setError('ההצטרפות נכשלה. בדקו חיבור לאינטרנט ונסו שוב.');
     } finally {
       setJoining(false);
+    }
+  };
+
+  const createPlayer = async (name) => {
+    const id = newId();
+    await setDoc(playerRef(sid, id), {
+      id, name, score: 0, correctCount: 0, streak: 0, joinedAt: serverTimestamp()
+    });
+    enterAs({ id, name });
+  };
+
+  const enterAs = (p) => {
+    savePlayer(sid, p);
+    setPlayer(p);
+    setExisting(null);
+    setKicked(false);
+    if (navigator.vibrate) navigator.vibrate(60);
+  };
+
+  const submitOpen = async (e) => {
+    e.preventDefault();
+    const text = openText.trim().slice(0, 140);
+    if (!text || !player || !question || answer || phase !== 'question') return;
+    const points = question.points || 500;
+    setAnswer({ q: qIndex, option: -1, correct: true, points, ms: Date.now() - shownAt.current.t, text });
+    if (navigator.vibrate) navigator.vibrate(40);
+    try {
+      const batch = writeBatch(db);
+      batch.set(answerRef(sid, qIndex, player.id), {
+        pid: player.id, name: player.name, q: qIndex, option: -1, text, correct: true, points, ms: 0, at: serverTimestamp()
+      });
+      batch.update(playerRef(sid, player.id), { score: increment(points) });
+      await batch.commit();
+      setOpenText('');
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -160,28 +197,43 @@ export default function QuizPlayer() {
     );
   }
 
+  // חזרה למשחק עם שם קיים
+  if (!player && existing) {
+    return (
+      <PlayerShell player={player} me={me}>
+        <div className="qp-center qp-join">
+          <div className="qp-emoji">👋</div>
+          <h1>השם הזה כבר במשחק</h1>
+          <p>יש שחקנית בשם <b>{existing.name}</b> עם <b>{existing.score || 0}</b> נקודות.</p>
+          <p className="qp-hint">חזרת מהפסקה והניקוד הזה שלך? המשיכי. נכנסת עכשיו לראשונה? בחרי שם אחר.</p>
+          <button className="qp-cta" onClick={() => enterAs({ id: existing.id, name: existing.name })}>זו אני – ממשיכה עם הניקוד ▶</button>
+          <button className="qp-ghost" onClick={() => { setExisting(null); setNameInput(existing.name + ' '); }}>אני חדשה – אכתוב שם אחר</button>
+        </div>
+      </PlayerShell>
+    );
+  }
+
   // מסך הצטרפות
   if (!player) {
     return (
-      <PlayerShell player={player} me={me}>
-        <form className="qp-center qp-join" onSubmit={join}>
-          <div className="qp-emoji">🎯</div>
+      <PlayerShell player={player} me={me} bg="/quiz/join.jpg">
+        <form className="qp-center qp-join qp-top-content" onSubmit={join}>
           <h1>{QUIZ_TITLE}</h1>
           {kicked && <p className="qp-warn">השם הוסר ע״י המנחה. בחרו כינוי אחר 🙂</p>}
-          <label htmlFor="nick">איך נקרא לך?</label>
+          <label htmlFor="nick">שם פרטי ושם משפחה</label>
           <input
             id="nick"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            maxLength={18}
-            placeholder="כינוי או שם פרטי"
+            maxLength={24}
+            placeholder="למשל: נועה כהן"
             autoComplete="off"
           />
           <button type="submit" className="qp-cta" disabled={!nameInput.trim() || joining}>
             {joining ? 'מצטרפת…' : 'בואו נשחק! 🚀'}
           </button>
           {error && <p className="qp-warn">{error}</p>}
-          <p className="qp-hint">בלי הרשמה ובלי פרטים אישיים – רק כינוי.</p>
+          <p className="qp-hint">בלי הרשמה. השם יופיע על המסך בטבלת המובילות.</p>
         </form>
       </PlayerShell>
     );
@@ -190,18 +242,72 @@ export default function QuizPlayer() {
   // לובי
   if (phase === 'lobby') {
     return (
-      <PlayerShell player={player} me={me} tone="lobby">
-        <div className="qp-center">
+      <PlayerShell player={player} me={me} tone="lobby" bg="/quiz/join.jpg">
+        <div className="qp-center qp-top-content">
           <div className="qp-emoji qp-bounce">🎉</div>
           <h1>את/ה בפנים!</h1>
           <p className="qp-big">{player.name}</p>
           <p>תסתכלו על המסך הגדול – מתחילים עוד רגע.</p>
+          <p className="qp-hint">יצאת מהמשחק? חוזרים לאותה כתובת ומקלידים אותו שם – הניקוד נשמר.</p>
         </div>
       </PlayerShell>
     );
   }
 
   // שאלה
+  // פתיחת סבב
+  if (phase === 'intro' && question) {
+    return (
+      <PlayerShell player={player} me={me} tone="waiting">
+        <div className="qp-center">
+          <div className="qp-emoji qp-bounce">🎬</div>
+          <h1>סבב {question.round + 1} מתחיל!</h1>
+          <p className="qp-big">{question.roundTitle.split('·').pop().trim()}</p>
+          <p>תתכוננו – עונים נכון ומהר ⚡</p>
+        </div>
+      </PlayerShell>
+    );
+  }
+
+  // שאלה פתוחה – התשובות מופיעות על המסך הגדול
+  if (phase === 'question' && question && question.type === 'open') {
+    if (answer && answer.q === qIndex) {
+      return (
+        <PlayerShell player={player} me={me} tone="right">
+          <div className="qp-center">
+            <div className="qp-emoji qp-bounce">💬</div>
+            <h1>התשובה שלך על המסך!</h1>
+            <p className="qp-points">+{answer.points}</p>
+            <p>תסתכלו על הקיר הגדול 👀</p>
+          </div>
+        </PlayerShell>
+      );
+    }
+    return (
+      <PlayerShell player={player} me={me} tone="question">
+        <div className="qp-qhead">
+          <span className="qp-pill">{question.roundTitle} · שאלה פתוחה</span>
+          <span className={`qp-timer ${remaining !== null && remaining < 10 ? 'qp-hurry' : ''}`}>
+            {remaining !== null ? Math.ceil(remaining) : ''}
+          </span>
+        </div>
+        <h2 className="qp-q">{question.q}</h2>
+        <form className="qp-open" onSubmit={submitOpen}>
+          <textarea
+            value={openText}
+            onChange={(e) => setOpenText(e.target.value)}
+            maxLength={140}
+            rows={4}
+            placeholder="למשל: לנסח מכתב להורים בשלוש שפות"
+          />
+          <div className="qp-counter">{openText.length}/140</div>
+          <button type="submit" className="qp-cta" disabled={!openText.trim()}>שליחה למסך 🚀</button>
+          <p className="qp-hint">כל תשובה שווה {question.points || 500} נקודות. בלי פרטים מזהים 🙂</p>
+        </form>
+      </PlayerShell>
+    );
+  }
+
   if (phase === 'question' && question) {
     if (answer && answer.q === qIndex) {
       const fast = answer.ms < question.time * 1000 * 0.35;
@@ -248,6 +354,20 @@ export default function QuizPlayer() {
   }
 
   // חשיפת תשובה
+  if (phase === 'reveal' && question && question.type === 'open') {
+    const mine = answer && answer.q === qIndex ? answer : null;
+    return (
+      <PlayerShell player={player} me={me} tone={mine ? 'right' : 'lobby'}>
+        <div className="qp-center">
+          <div className="qp-emoji qp-bounce">{mine ? '💜' : '💬'}</div>
+          <h1>{mine ? 'תודה על התשובה!' : 'תסתכלו על הקיר'}</h1>
+          {mine && <p className="qp-points">+{mine.points}</p>}
+          <p>בחרו משימה אחת – ונסו אותה עוד השבוע.</p>
+        </div>
+      </PlayerShell>
+    );
+  }
+
   if (phase === 'reveal' && question) {
     const mine = answer && answer.q === qIndex ? answer : null;
     const rank = state.ranks?.[player.id];
@@ -283,13 +403,14 @@ export default function QuizPlayer() {
   if (phase === 'leaderboard') {
     const rank = state.ranks?.[player.id];
     return (
-      <PlayerShell player={player} me={me} tone="lobby">
-        <div className="qp-center">
+      <PlayerShell player={player} me={me} tone="lobby" bg="/quiz/break.jpg">
+        <div className="qp-center qp-top-content">
           <div className="qp-emoji">📊</div>
           <h1>{rank ? `מקום ${rank}` : 'טבלת המובילות'}</h1>
           <p className="qp-big">{me?.score ?? 0} נקודות</p>
           {rank && rank <= 3 && <p className="qp-streak">את/ה על הפודיום כרגע! 🏆</p>}
           <p>התשובות הנכונות שלך: {me?.correctCount ?? 0}</p>
+          <p className="qp-hint">הפסקה? אפשר לצאת – כשחוזרים לכתובת, ממשיכים מאותו מקום.</p>
         </div>
       </PlayerShell>
     );

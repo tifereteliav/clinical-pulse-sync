@@ -75,7 +75,11 @@
 .qp-hurry { background: var(--red); color: #fff; animation: qp-pulse 0.5s infinite alternate; }
 .qp-bar { height: 8px; background: rgba(255,255,255,0.18); border-radius: 99px; overflow: hidden; }
 .qp-bar div { height: 100%; background: var(--gold); transition: width 0.2s linear; }
-.qp-q { font-size: 22px; line-height: 1.4; margin: 14px 0; font-weight: 700; }
+.qp-q {
+  font-size: 23px; line-height: 1.4; margin: 14px 0; font-weight: 800;
+  color: var(--navy); background: #fff; border-radius: 18px; padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3); border-bottom: 5px solid var(--gold);
+}
 
 .qp-options { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .qp-opt {
@@ -148,7 +152,7 @@
 }
 .qh-join-step { font-size: 20px; font-weight: 700; text-align: center; }
 .qh-url { font-size: 26px; font-weight: 900; color: var(--purple); direction: ltr; text-align: center; word-break: break-all; }
-.qh-names h2 { font-size: 34px; margin: 0 0 18px; }
+.qh-names h2 { font-size: 34px; margin: 0 0 18px; color: #fff; }
 .qh-chips { display: flex; flex-wrap: wrap; gap: 12px; max-height: 60vh; overflow: auto; }
 .qh-chip {
   font: inherit; font-size: 22px; font-weight: 700; color: var(--navy); background: #fff;
@@ -160,7 +164,11 @@
 /* שאלה */
 .qh-qwrap { flex: 1; display: flex; flex-direction: column; gap: 22px; padding-bottom: 18px; }
 .qh-qrow { display: flex; align-items: center; gap: 32px; }
-.qh-question { flex: 1; font-size: 46px; line-height: 1.25; margin: 0; font-weight: 800; }
+.qh-question {
+  flex: 1; font-size: 46px; line-height: 1.25; margin: 0; font-weight: 800;
+  color: var(--navy); background: #fff; border-radius: 24px; padding: 24px 32px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.35); border-bottom: 8px solid var(--gold);
+}
 .qh-clock { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
 .qh-clock svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .qh-clock-bg { fill: rgba(255,255,255,0.08); stroke: rgba(255,255,255,0.15); stroke-width: 10; }
@@ -196,7 +204,7 @@
 .qh-fast { margin-inline-start: auto; color: var(--gold); font-weight: 800; }
 
 /* טבלת מובילות */
-.qh-board { flex: 1; display: flex; flex-direction: column; max-width: 1100px; width: 100%; margin: 0 auto; }
+.qh-board { flex: 1; display: flex; flex-direction: column; max-width: 1340px; width: 100%; margin: 0 auto; }
 .qh-board .qh-h1 { font-size: 42px; margin: 0 0 12px; }
 .qh-board ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .qh-board li {
@@ -250,3 +258,108 @@
   .qh-board li { grid-template-columns: 44px 1fr 90px; }
   .qh-pbar { display: none; }
 }
+
+/* חסימת צבע הכותרות הכללי של האתר הישן */
+.qp-shell h1, .qp-shell h2, .qh-shell h1, .qh-shell h2 { color: inherit; }
+.qp-shell .qp-q, .qh-shell .qh-question { color: var(--navy); }
+
+/* חזרה למשחק */
+.qp-ghost {
+  width: 100%; max-width: 360px; font: inherit; font-size: 18px; font-weight: 700;
+  padding: 14px; border-radius: 14px; cursor: pointer; color: #fff;
+  background: transparent; border: 2px solid rgba(255,255,255,0.5);
+}
+.qh-joinhint { font-size: 20px; color: var(--lav); direction: rtl; }
+.qh-joinhint b { color: #fff; direction: ltr; unicode-bidi: embed; }
+.qh-board-row { display: flex; gap: 28px; align-items: flex-start; }
+.qh-board-row ol { flex: 1; }
+.qh-rejoin {
+  width: 210px; flex-shrink: 0; background: #fff; color: var(--navy); border-radius: 20px;
+  padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  text-align: center; font-size: 17px; font-weight: 700; line-height: 1.35;
+}
+
+/* שאלה פתוחה */
+.qp-open { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+.qp-open textarea {
+  font: inherit; font-size: 20px; padding: 14px; border-radius: 16px; border: 3px solid var(--lav);
+  resize: none; outline: none; color: var(--navy);
+}
+.qp-open textarea:focus { border-color: var(--gold); }
+.qp-counter { text-align: left; font-size: 13px; opacity: 0.7; }
+.qp-open .qp-cta { max-width: none; }
+.qh-wall {
+  flex: 1; min-height: 0; overflow: hidden; display: flex; flex-wrap: wrap; align-content: flex-start;
+  gap: 14px;
+}
+.qh-wall-empty { width: 100%; text-align: center; font-size: 30px; color: var(--lav); margin-top: 40px; }
+.qh-note {
+  font: inherit; text-align: right; border: 0; cursor: pointer; color: var(--navy);
+  border-radius: 16px; padding: 14px 18px; max-width: 420px; display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3); animation: qh-pop 0.5s cubic-bezier(.2,1.6,.4,1);
+}
+.qh-note-text { font-size: 22px; font-weight: 700; line-height: 1.35; }
+.qh-note-name { font-size: 15px; opacity: 0.75; }
+.qh-note-0 { background: #FFF4C2; transform: rotate(-1.2deg); }
+.qh-note-1 { background: #E3E1FF; transform: rotate(1deg); }
+.qh-note-2 { background: #D6F5E3; transform: rotate(-0.6deg); }
+.qh-note-3 { background: #FFE1E2; transform: rotate(1.4deg); }
+.qh-wall-dense { gap: 8px; }
+.qh-wall-dense .qh-note { padding: 8px 12px; max-width: 300px; }
+.qh-wall-dense .qh-note-text { font-size: 16px; }
+.qh-wall-dense .qh-note-name { font-size: 12px; }
+.qh-wall-xdense { gap: 6px; }
+.qh-wall-xdense .qh-note { padding: 6px 10px; max-width: 230px; }
+.qh-wall-xdense .qh-note-text { font-size: 13px; }
+.qh-wall-xdense .qh-note-name { display: none; }
+
+/* ===== תמונות רקע ===== */
+.qh-has-bg { background-size: cover; background-position: center; }
+.qh-has-bg::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: linear-gradient(180deg, rgba(20,26,61,0.55) 0%, rgba(20,26,61,0.05) 22%, rgba(20,26,61,0.05) 70%, rgba(20,26,61,0.6) 100%);
+}
+.qh-bg-left::before {
+  background: linear-gradient(270deg, rgba(20,26,61,0) 35%, rgba(20,26,61,0.75) 70%),
+              linear-gradient(180deg, rgba(20,26,61,0.5) 0%, rgba(20,26,61,0) 20%, rgba(20,26,61,0) 75%, rgba(20,26,61,0.55) 100%);
+}
+.qh-has-bg > * { position: relative; z-index: 1; }
+.qh-has-bg .qh-footer { background: rgba(10,14,40,0.75); backdrop-filter: blur(6px); }
+
+/* לובי עם תמונה – התוכן בצד שמאל, הדמויות בימין */
+.qh-lobby2 { flex: 1; display: flex; justify-content: flex-end; align-items: center; }
+.qh-lobby-panel { width: 58%; display: grid; grid-template-columns: 270px 1fr; gap: 28px; align-items: start; }
+.qh-join-sm { padding: 18px; gap: 10px; border-radius: 22px; }
+.qh-join-sm .qh-join-step { font-size: 18px; }
+.qh-join-sm .qh-url { font-size: 17px; }
+.qh-lobby2 .qh-names h2 { font-size: 30px; text-shadow: 0 2px 12px rgba(0,0,0,0.5); }
+.qh-lobby2 .qh-chips { max-height: 52vh; }
+.qh-chips-dense { gap: 7px; }
+.qh-chips-dense .qh-chip { font-size: 16px; padding: 6px 14px; }
+
+/* פתיחת סבב */
+.qh-intro { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-align: left; padding-left: 2%; }
+.qh-intro > * { max-width: 46%; text-align: right; }
+.qh-intro-num {
+  font-size: 30px; font-weight: 900; color: var(--navy); background: var(--gold);
+  border-radius: 999px; padding: 6px 26px; animation: qh-pop 0.6s cubic-bezier(.2,1.6,.4,1);
+}
+.qh-intro-title { font-size: 84px; font-weight: 900; margin: 16px 0 10px; line-height: 1.05; text-shadow: 0 6px 30px rgba(0,0,0,0.5); animation: qh-up 0.7s 0.15s both; }
+.qh-intro-meta { font-size: 26px; color: var(--lav); animation: qh-up 0.7s 0.35s both; }
+
+/* פודיום על רקע התמונה */
+.qh-has-bg .qh-podium-wrap { padding-top: 0; }
+.qh-has-bg .qh-p1 .qh-block { height: 230px; }
+.qh-has-bg .qh-p2 .qh-block { height: 170px; }
+.qh-has-bg .qh-p3 .qh-block { height: 125px; }
+.qh-has-bg .qh-medal { font-size: 64px; }
+
+/* טלפון עם תמונה */
+.qp-has-bg { background-size: cover; background-position: center bottom; position: relative; }
+.qp-has-bg::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(20,26,61,0.92) 0%, rgba(20,26,61,0.75) 45%, rgba(20,26,61,0) 70%);
+}
+.qp-has-bg > * { position: relative; z-index: 1; }
+.qp-top-content { justify-content: flex-start; padding-top: 8px; }
+.qp-has-bg .qp-center h1, .qp-has-bg .qp-center p { text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
