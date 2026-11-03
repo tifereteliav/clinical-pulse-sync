@@ -303,6 +303,16 @@ export default function QuizHost() {
           <div className="qh-intro-num">סבב {r + 1}</div>
           <h1 className="qh-intro-title">{ROUNDS[r].title.split('·').pop().trim()}</h1>
           <div className="qh-intro-meta">{count} שאלות · מי שעונה נכון ומהר – מנצחת ⚡</div>
+          {r > 0 && (
+            <div className="qh-intro-rejoin">
+              <QRCodeSVG value={joinUrl()} size={150} bgColor="#ffffff" fgColor="#1F2654" level="M" />
+              <div>
+                <b>חוזרות מההפסקה?</b>
+                <span>סורקות שוב ומקלידות את אותו שם – הניקוד נשמר</span>
+                <span className="qh-intro-url">{joinLabel()}</span>
+              </div>
+            </div>
+          )}
         </div>
       </HostFrame>
     );

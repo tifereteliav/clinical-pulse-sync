@@ -363,3 +363,13 @@
 .qp-has-bg > * { position: relative; z-index: 1; }
 .qp-top-content { justify-content: flex-start; padding-top: 8px; }
 .qp-has-bg .qp-center h1, .qp-has-bg .qp-center p { text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+
+.qh-intro-rejoin {
+  margin-top: 26px; display: flex; align-items: center; gap: 18px; background: #fff; color: var(--navy);
+  border-radius: 22px; padding: 14px 20px 14px 14px; box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+  animation: qh-up 0.7s 0.55s both; max-width: 46%;
+}
+.qh-intro-rejoin > div { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+.qh-intro-rejoin b { font-size: 26px; }
+.qh-intro-rejoin span { font-size: 18px; line-height: 1.35; }
+.qh-intro-url { direction: ltr; text-align: right; font-weight: 800; color: var(--purple); }
