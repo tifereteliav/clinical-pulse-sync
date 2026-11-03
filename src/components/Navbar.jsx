@@ -33,7 +33,7 @@ export default function Navbar() {
 
       {/* Navigation Links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>
+        <NavLink to="/poll" end className={({ isActive }) => isActive ? 'active' : ''}>
           Audience View
         </NavLink>
         <NavLink to="/admin" className={({ isActive }) => isActive ? 'active' : ''}>
