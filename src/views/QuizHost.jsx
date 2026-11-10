@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { onSnapshot, setDoc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { QRCodeSVG } from 'qrcode.react';
 import { stateRef, playersCol, playerRef, answersCol, answerRef, newId, computeRanks } from '../quiz/api';
-import { QUESTIONS, ROUNDS, OPTION_STYLES, QUIZ_TITLE, QUIZ_SUBTITLE } from '../config/quiz';
+import { OPTION_STYLES, QUIZZES, DEFAULT_QUIZ_ID, getQuiz } from '../config/quiz';
 import { sfx, unlockAudio, setSoundEnabled } from '../quiz/sounds';
 import '../quiz/quiz.css';
 
@@ -31,7 +31,7 @@ function Confetti() {
 
 const ROUND_IMAGES = ['/quiz/round1.jpg', '/quiz/round2.jpg', '/quiz/round3.jpg'];
 
-function HostFrame({ children, footer, label, bg, bgClass = '' }) {
+function HostFrame({ children, footer, label, bg, bgClass = '', quiz }) {
   return (
     <div className={`qh-shell ${bg ? `qh-has-bg ${bgClass}` : ''}`} dir="rtl"
       style={bg ? { backgroundImage: `url(${bg})` } : undefined}>
@@ -39,8 +39,8 @@ function HostFrame({ children, footer, label, bg, bgClass = '' }) {
         <div className="qh-brand">
           <img src="/logo.png" alt="" />
           <div>
-            <div className="qh-title">{QUIZ_TITLE}</div>
-            <div className="qh-sub">{QUIZ_SUBTITLE}</div>
+            <div className="qh-title">{quiz?.title}</div>
+            <div className="qh-sub">{quiz?.subtitle}</div>
           </div>
         </div>
         <div className="qh-joinhint">הצטרפות: <b>{joinLabel()}</b></div>
@@ -64,10 +64,14 @@ export default function QuizHost() {
   const lastTick = useRef(-1);
   const prevCount = useRef(0);
   const allAnsweredAt = useRef({ q: -1, t: 0 });
+  const [pickId, setPickId] = useState(DEFAULT_QUIZ_ID);
 
   const sid = state?.sessionId;
   const phase = state?.phase;
   const qIndex = state?.qIndex ?? 0;
+  // בזמן משחק – החידון שנבחר בפתיחה. במסך הפתיחה – החידון המסומן כרגע.
+  const quiz = getQuiz(sid ? state?.quizId : pickId);
+  const { QUESTIONS, ROUNDS } = quiz;
   const question = QUESTIONS[qIndex];
 
   useEffect(() => onSnapshot(stateRef(), (s) => setState(s.exists() ? s.data() : null),
@@ -109,12 +113,21 @@ export default function QuizHost() {
   }, []);
 
   // ===== פעולות =====
+  // משחק חדש באמצע משחק: סוגרים את הנוכחי וחוזרים למסך בחירת החידון
   const newGame = async () => {
     unlockAudio();
-    if (sid && !window.confirm('להתחיל משחק חדש? כל המשתתפות יצטרכו להצטרף מחדש.')) return;
+    if (sid && phase !== 'podium' && !window.confirm(`להתחיל משחק חדש? כל ה${quiz.unit} יצטרכו להצטרף מחדש.`)) return;
+    revealedFor.current = -1;
+    if (sid) setPickId(state.quizId || DEFAULT_QUIZ_ID);
+    await setDoc(stateRef(), { sessionId: null, phase: 'closed', quizId: state?.quizId || pickId, qIndex: 0, startedAt: 0, ranks: {}, top: [], total: 0 });
+  };
+
+  // פתיחת לובי לחידון שנבחר
+  const openQuiz = async () => {
+    unlockAudio();
     revealedFor.current = -1;
     await setDoc(stateRef(), {
-      sessionId: newId(), phase: 'lobby', qIndex: 0, startedAt: 0, ranks: {}, top: [], total: 0
+      sessionId: newId(), quizId: pickId, phase: 'lobby', qIndex: 0, startedAt: 0, ranks: {}, top: [], total: 0
     });
   };
 
@@ -176,8 +189,8 @@ export default function QuizHost() {
   // הפעולה הראשית (כפתור גדול / מקש רווח / שלט מצגות)
   const isLastQuestion = qIndex >= QUESTIONS.length - 1;
   const primary = (() => {
-    if (!state || !sid) return { label: 'פתיחת חידון חדש', fn: newGame };
-    if (phase === 'lobby') return { label: `מתחילים! (${players.length} משתתפות)`, fn: () => startRound(0) };
+    if (!state || !sid) return { label: 'פתיחת החידון ←', fn: openQuiz };
+    if (phase === 'lobby') return { label: `מתחילים! (${players.length} ${quiz.unit})`, fn: () => startRound(0) };
     if (phase === 'intro') return { label: 'יאללה, לשאלה הראשונה! ←', fn: () => startQuestion(qIndex) };
     if (phase === 'question' && question?.type === 'open') {
       return { label: isLastQuestion ? 'סיימנו – לטבלת הסיום 🏁' : 'סיימנו – הלאה ←', fn: question.lastInRound ? showLeaderboard : () => startQuestion(qIndex + 1) };
@@ -192,7 +205,7 @@ export default function QuizHost() {
       return { label: `ל${ROUNDS[QUESTIONS[qIndex + 1].round].title} ←`, fn: () => startRound(qIndex + 1) };
     }
     if (phase === 'podium') return { label: 'משחק חדש', fn: newGame };
-    return { label: 'פתיחת חידון חדש', fn: newGame };
+    return { label: 'משחק חדש', fn: newGame };
   })();
 
   const runPrimary = useCallback(async () => {
@@ -253,16 +266,28 @@ export default function QuizHost() {
 
   // ===== מסכים =====
   if (state === undefined) {
-    return <HostFrame footer={null}><div className="qh-center"><div className="qp-spinner" /></div></HostFrame>;
+    return <HostFrame quiz={quiz} footer={null}><div className="qh-center"><div className="qp-spinner" /></div></HostFrame>;
   }
 
   if (!state || !sid) {
     return (
-      <HostFrame footer={footer}>
+      <HostFrame quiz={quiz} footer={footer}>
         <div className="qh-center">
           <div className="qh-hero">🎯</div>
-          <h1 className="qh-h1">{QUIZ_TITLE}</h1>
-          <p className="qh-lead">לחצי על "פתיחת חידון חדש" כדי לפתוח את הלובי.</p>
+          <h1 className="qh-h1">איזה חידון מפעילים?</h1>
+          <div className="qh-pick">
+            {QUIZZES.map((qz) => {
+              const n = qz.rounds.reduce((s, r) => s + r.questions.length, 0);
+              return (
+                <button key={qz.id} className={`qh-pick-card ${pickId === qz.id ? 'qh-pick-on' : ''}`} onClick={() => setPickId(qz.id)}>
+                  <b>{qz.title}</b>
+                  <span>{qz.name}</span>
+                  <small>{qz.rounds.length} סבבים · {n} שאלות · {qz.teams ? 'משחק בצוותים' : 'משחק אישי'}</small>
+                </button>
+              );
+            })}
+          </div>
+          <p className="qh-lead">בחרי חידון ולחצי על "פתיחת החידון" כדי לפתוח את הלובי.</p>
         </div>
       </HostFrame>
     );
@@ -272,7 +297,7 @@ export default function QuizHost() {
 
   if (phase === 'lobby') {
     return (
-      <HostFrame footer={footer} label={`${players.length} משתתפות`} bg="/quiz/lobby.jpg" bgClass="qh-bg-left">
+      <HostFrame quiz={quiz} footer={footer} label={`${players.length} ${quiz.unit}`} bg="/quiz/lobby.jpg" bgClass="qh-bg-left">
         <div className="qh-lobby2">
           <div className="qh-lobby-panel">
             <div className="qh-join qh-join-sm">
@@ -281,7 +306,7 @@ export default function QuizHost() {
               <div className="qh-url">{joinLabel()}</div>
             </div>
             <div className="qh-names">
-              <h2>{players.length === 0 ? 'מחכים למשתתפות הראשונות…' : `הצטרפו כבר ${players.length}! 🎉`}</h2>
+              <h2>{players.length === 0 ? (quiz.teams ? 'מחכים לצוותים הראשונים…' : 'מחכים למשתתפות הראשונות…') : `הצטרפו כבר ${players.length} ${quiz.unit}! 🎉`}</h2>
               <div className={`qh-chips ${players.length > 30 ? 'qh-chips-dense' : ''}`}>
                 {players.map((p) => (
                   <button key={p.id} className="qh-chip" onClick={() => kick(p)} title="לחיצה להסרה">{p.name}</button>
@@ -298,17 +323,18 @@ export default function QuizHost() {
     const r = question.round;
     const count = ROUNDS[r].questions.length;
     return (
-      <HostFrame footer={footer} label={`סבב ${r + 1} מתוך ${ROUNDS.length}`} bg={ROUND_IMAGES[r]} bgClass="qh-bg-left">
+      <HostFrame quiz={quiz} footer={footer} label={`סבב ${r + 1} מתוך ${ROUNDS.length}`} bg={ROUND_IMAGES[r]} bgClass="qh-bg-left">
         <div className="qh-intro">
           <div className="qh-intro-num">סבב {r + 1}</div>
           <h1 className="qh-intro-title">{ROUNDS[r].title.split('·').pop().trim()}</h1>
-          <div className="qh-intro-meta">{count} שאלות · מי שעונה נכון ומהר – מנצחת ⚡</div>
+          <div className="qh-intro-meta">{count} שאלות · {quiz.teams ? 'הצוות שעונה נכון ומהר – מנצח' : 'מי שעונה נכון ומהר – מנצחת'} ⚡</div>
           {r > 0 && (
             <div className="qh-intro-rejoin">
-              <QRCodeSVG value={joinUrl()} size={150} bgColor="#ffffff" fgColor="#1F2654" level="M" />
+              <QRCodeSVG value={joinUrl()} size={190} bgColor="#ffffff" fgColor="#1F2654" level="M" />
               <div>
-                <b>חוזרות מההפסקה?</b>
-                <span>סורקות שוב ומקלידות את אותו שם – הניקוד נשמר</span>
+                <b>{quiz.teams ? 'עוד לא הצטרפתם/ן?' : 'חוזרות מההפסקה?'}</b>
+                <span>{quiz.teams ? 'סורקים ומצטרפים עכשיו – אפשר גם באמצע' : 'סורקות שוב ומקלידות את אותו שם – הניקוד נשמר'}</span>
+                {quiz.teams && <span>הטלפון התנתק? אותו שם צוות – הניקוד נשמר</span>}
                 <span className="qh-intro-url">{joinLabel()}</span>
               </div>
             </div>
@@ -327,7 +353,7 @@ export default function QuizHost() {
       await updateDoc(answerRef(sid, qIndex, a.pid), { text: '' });
     };
     return (
-      <HostFrame footer={footer} label={`${question.roundTitle} · שאלה פתוחה`}>
+      <HostFrame quiz={quiz} footer={footer} label={`${question.roundTitle} · שאלה פתוחה`}>
         <div className="qh-qwrap">
           <div className="qh-qrow">
             <h1 className="qh-question">{question.q}</h1>
@@ -373,7 +399,7 @@ export default function QuizHost() {
     const ring = remaining !== null ? remaining / question.time : 0;
 
     return (
-      <HostFrame footer={footer} label={`${question.roundTitle} · שאלה ${qIndex + 1}/${QUESTIONS.length}`}>
+      <HostFrame quiz={quiz} footer={footer} label={`${question.roundTitle} · שאלה ${qIndex + 1}/${QUESTIONS.length}`}>
         <div className="qh-qwrap">
           <div className="qh-qrow">
             <h1 className="qh-question">{question.q}</h1>
@@ -417,7 +443,7 @@ export default function QuizHost() {
             <div className="qh-explain">
               <span className="qh-bulb">💡</span>
               <span>{question.explain}</span>
-              {fastestName && <span className="qh-fast">⚡ הכי מהירה: {fastestName}</span>}
+              {fastestName && <span className="qh-fast">⚡ {quiz.teams ? 'הצוות הכי מהיר' : 'הכי מהירה'}: {fastestName}</span>}
             </div>
           )}
         </div>
@@ -429,7 +455,7 @@ export default function QuizHost() {
     const top = rankedLive.slice(0, 10);
     const best = Math.max(1, top[0]?.score || 1);
     return (
-      <HostFrame footer={footer} label={`${ROUNDS[question.round].title} · סיכום`}>
+      <HostFrame quiz={quiz} footer={footer} label={`${ROUNDS[question.round].title} · סיכום`}>
         <div className="qh-board">
           <h1 className="qh-h1">טבלת המובילות 📊</h1>
           <div className="qh-board-row"><ol>
@@ -443,8 +469,10 @@ export default function QuizHost() {
             ))}
           </ol>
           <aside className="qh-rejoin">
-            <QRCodeSVG value={joinUrl()} size={150} bgColor="#ffffff" fgColor="#1F2654" level="M" />
-            <div>חוזרות מההפסקה?<br />סורקות שוב – הניקוד נשמר</div>
+            <QRCodeSVG value={joinUrl()} size={quiz.teams ? 190 : 150} bgColor="#ffffff" fgColor="#1F2654" level="M" />
+            {quiz.teams
+              ? <div><b>עוד לא הצטרפתם/ן?</b><br />סורקים ומצטרפים לסבב הבא<br /><b>{joinLabel()}</b></div>
+              : <div>חוזרות מההפסקה?<br />סורקות שוב – הניקוד נשמר</div>}
           </aside></div>
         </div>
       </HostFrame>
@@ -454,7 +482,7 @@ export default function QuizHost() {
   if (phase === 'podium') {
     const [first, second, third] = rankedLive;
     return (
-      <HostFrame footer={footer} label="🏆 המנצחות" bg="/quiz/podium.jpg">
+      <HostFrame quiz={quiz} footer={footer} label={quiz.teams ? '🏆 המנצחים' : '🏆 המנצחות'} bg="/quiz/podium.jpg">
         <Confetti />
         <div className="qh-podium-wrap">
           <div className="qh-podium">
@@ -467,5 +495,5 @@ export default function QuizHost() {
     );
   }
 
-  return <HostFrame footer={footer}><div className="qh-center"><p className="qh-lead">מצב לא מוכר. לחצי על משחק חדש.</p></div></HostFrame>;
+  return <HostFrame quiz={quiz} footer={footer}><div className="qh-center"><p className="qh-lead">מצב לא מוכר. לחצי על משחק חדש.</p></div></HostFrame>;
 }

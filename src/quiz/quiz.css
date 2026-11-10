@@ -373,3 +373,13 @@
 .qh-intro-rejoin b { font-size: 26px; }
 .qh-intro-rejoin span { font-size: 18px; line-height: 1.35; }
 .qh-intro-url { direction: ltr; text-align: right; font-weight: 800; color: var(--purple); }
+
+/* בחירת חידון במסך הפתיחה של המנחה */
+.qh-pick { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin: 10px 0 22px; }
+.qh-pick-card { width: 340px; display: flex; flex-direction: column; gap: 8px; text-align: right; padding: 20px 22px; border-radius: 20px; border: 3px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: #fff; font: inherit; cursor: pointer; transition: transform .15s, border-color .15s, background .15s; }
+.qh-pick-card:hover { transform: translateY(-2px); }
+.qh-pick-card b { font-size: 24px; }
+.qh-pick-card span { font-size: 17px; opacity: 0.9; }
+.qh-pick-card small { font-size: 14px; opacity: 0.7; }
+.qh-pick-on { border-color: var(--gold, #E5A000); background: rgba(229,160,0,0.16); }
+.qh-pick-on b::before { content: '✔ '; color: var(--gold, #E5A000); }
