@@ -221,7 +221,7 @@ export default function QuizPlayer() {
     return (
       <PlayerShell player={player} me={me} bg="/quiz/join.jpg">
         <form className="qp-center qp-join qp-top-content" onSubmit={join}>
-          <h1>{QUIZ_TITLE}</h1>
+          <h1>{quiz.title}</h1>
           {kicked && <p className="qp-warn">השם הוסר ע״י המנחה. {T ? 'בחרו שם צוות אחר 🙂' : 'בחרו כינוי אחר 🙂'}</p>}
           <label htmlFor="nick">{quiz.joinLabel}</label>
           <input
