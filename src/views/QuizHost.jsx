@@ -259,7 +259,7 @@ export default function QuizHost() {
       <div className="qh-tools">
         <button onClick={toggleSound} title="צליל">{sound ? '🔊' : '🔇'}</button>
         <button onClick={fullscreen} title="מסך מלא">⛶</button>
-        {sid && phase !== 'lobby' && <button onClick={newGame} title="משחק חדש">↺ משחק חדש</button>}
+        {sid && <button onClick={newGame} title="חזרה לבחירת חידון">↺ {phase === 'lobby' ? 'החלפת חידון' : 'משחק חדש'}</button>}
       </div>
     </>
   );
