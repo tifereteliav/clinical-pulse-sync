@@ -207,10 +207,10 @@ export default function QuizPlayer() {
         <div className="qp-center qp-join">
           <div className="qp-emoji">👋</div>
           <h1>{T ? 'כבר יש צוות בשם הזה' : 'השם הזה כבר במשחק'}</h1>
-          <p>{T ? 'הצוות' : 'יש שחקנית בשם'} <b>{existing.name}</b> {T ? 'כבר במשחק עם' : 'עם'} <b>{existing.score || 0}</b> נקודות.</p>
-          <p className="qp-hint">{T ? 'זה הצוות שלכם/ן והטלפון התנתק? ממשיכים עם הניקוד. צוות חדש? בוחרים שם אחר.' : 'חזרת מהפסקה והניקוד הזה שלך? המשיכי. נכנסת עכשיו לראשונה? בחרי שם אחר.'}</p>
-          <button className="qp-cta" onClick={() => enterAs({ id: existing.id, name: existing.name })}>{T ? 'זה הצוות שלנו – ממשיכים ▶' : 'זו אני – ממשיכה עם הניקוד ▶'}</button>
-          <button className="qp-ghost" onClick={() => { setExisting(null); setNameInput(existing.name + ' '); }}>{T ? 'אנחנו צוות חדש – נבחר שם אחר' : 'אני חדשה – אכתוב שם אחר'}</button>
+          <p>{T ? 'הצוות' : 'יש משתתף/ת בשם'} <b>{existing.name}</b> {T ? 'כבר במשחק עם' : 'עם'} <b>{existing.score || 0}</b> נקודות.</p>
+          <p className="qp-hint">{T ? 'זה הצוות שלכם/ן והטלפון התנתק? ממשיכים עם הניקוד. צוות חדש? בוחרים שם אחר.' : 'חזרת מהפסקה והניקוד הזה שלך? ממשיכים. נכנסת עכשיו לראשונה? בוחרים שם אחר.'}</p>
+          <button className="qp-cta" onClick={() => enterAs({ id: existing.id, name: existing.name })}>{T ? 'זה הצוות שלנו – ממשיכים ▶' : 'זה אני – ממשיכים עם הניקוד ▶'}</button>
+          <button className="qp-ghost" onClick={() => { setExisting(null); setNameInput(existing.name + ' '); }}>{T ? 'אנחנו צוות חדש – נבחר שם אחר' : 'אני חדש/ה – אכתוב שם אחר'}</button>
         </div>
       </PlayerShell>
     );
@@ -233,7 +233,7 @@ export default function QuizPlayer() {
             autoComplete="off"
           />
           <button type="submit" className="qp-cta" disabled={!nameInput.trim() || joining}>
-            {joining ? (T ? 'מצטרפים…' : 'מצטרפת…') : 'בואו נשחק! 🚀'}
+            {joining ? (T ? 'מצטרפים…' : 'מצטרפים…') : 'בואו נשחק! 🚀'}
           </button>
           {error && <p className="qp-warn">{error}</p>}
           <p className="qp-hint">{quiz.joinHint}</p>
@@ -318,8 +318,8 @@ export default function QuizPlayer() {
         <PlayerShell player={player} me={me} tone="waiting">
           <div className="qp-center">
             <div className="qp-emoji qp-pulse">{fast ? '⚡' : '✅'}</div>
-            <h1>{fast ? (T ? 'וואו, איזו מהירות!' : 'וואו, מהירה!') : 'התשובה נקלטה'}</h1>
-            <p>{T ? 'מחכים לכל הצוותים… עיניים למסך 👀' : 'מחכים לכולן… עיניים למסך 👀'}</p>
+            <h1>{fast ? (T ? 'וואו, איזו מהירות!' : 'וואו, איזו מהירות!') : 'התשובה נקלטה'}</h1>
+            <p>{T ? 'מחכים לכל הצוותים… עיניים למסך 👀' : 'מחכים לכולם… עיניים למסך 👀'}</p>
           </div>
         </PlayerShell>
       );

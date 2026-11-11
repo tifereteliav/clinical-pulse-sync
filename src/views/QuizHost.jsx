@@ -306,7 +306,7 @@ export default function QuizHost() {
               <div className="qh-url">{joinLabel()}</div>
             </div>
             <div className="qh-names">
-              <h2>{players.length === 0 ? (quiz.teams ? 'מחכים לצוותים הראשונים…' : 'מחכים למשתתפות הראשונות…') : `הצטרפו כבר ${players.length} ${quiz.unit}! 🎉`}</h2>
+              <h2>{players.length === 0 ? (quiz.teams ? 'מחכים לצוותים הראשונים…' : 'מחכים למשתתפים הראשונים…') : `הצטרפו כבר ${players.length} ${quiz.unit}! 🎉`}</h2>
               <div className={`qh-chips ${players.length > 30 ? 'qh-chips-dense' : ''}`}>
                 {players.map((p) => (
                   <button key={p.id} className="qh-chip" onClick={() => kick(p)} title="לחיצה להסרה">{p.name}</button>
@@ -327,13 +327,13 @@ export default function QuizHost() {
         <div className="qh-intro">
           <div className="qh-intro-num">סבב {r + 1}</div>
           <h1 className="qh-intro-title">{ROUNDS[r].title.split('·').pop().trim()}</h1>
-          <div className="qh-intro-meta">{count} שאלות · {quiz.teams ? 'הצוות שעונה נכון ומהר – מנצח' : 'מי שעונה נכון ומהר – מנצחת'} ⚡</div>
+          <div className="qh-intro-meta">{count} שאלות · {quiz.teams ? 'הצוות שעונה נכון ומהר – מנצח' : 'מי שעונה נכון ומהר – מנצח/ת'} ⚡</div>
           {r > 0 && (
             <div className="qh-intro-rejoin">
               <QRCodeSVG value={joinUrl()} size={190} bgColor="#ffffff" fgColor="#1F2654" level="M" />
               <div>
-                <b>{quiz.teams ? 'עוד לא הצטרפתם/ן?' : 'חוזרות מההפסקה?'}</b>
-                <span>{quiz.teams ? 'סורקים ומצטרפים עכשיו – אפשר גם באמצע' : 'סורקות שוב ומקלידות את אותו שם – הניקוד נשמר'}</span>
+                <b>{quiz.teams ? 'עוד לא הצטרפתם/ן?' : 'חזרתם/ן מההפסקה?'}</b>
+                <span>{quiz.teams ? 'סורקים ומצטרפים עכשיו – אפשר גם באמצע' : 'סורקים שוב ומקלידים את אותו שם – הניקוד נשמר'}</span>
                 {quiz.teams && <span>הטלפון התנתק? אותו שם צוות – הניקוד נשמר</span>}
                 <span className="qh-intro-url">{joinLabel()}</span>
               </div>
@@ -443,7 +443,7 @@ export default function QuizHost() {
             <div className="qh-explain">
               <span className="qh-bulb">💡</span>
               <span>{question.explain}</span>
-              {fastestName && <span className="qh-fast">⚡ {quiz.teams ? 'הצוות הכי מהיר' : 'הכי מהירה'}: {fastestName}</span>}
+              {fastestName && <span className="qh-fast">⚡ {quiz.teams ? 'הצוות הכי מהיר' : 'הכי מהיר/ה'}: {fastestName}</span>}
             </div>
           )}
         </div>
@@ -482,7 +482,7 @@ export default function QuizHost() {
   if (phase === 'podium') {
     const [first, second, third] = rankedLive;
     return (
-      <HostFrame quiz={quiz} footer={footer} label={quiz.teams ? '🏆 המנצחים' : '🏆 המנצחות'} bg="/quiz/podium.jpg">
+      <HostFrame quiz={quiz} footer={footer} label={quiz.teams ? '🏆 המנצחים' : '🏆 המנצחים'} bg="/quiz/podium.jpg">
         <Confetti />
         <div className="qh-podium-wrap">
           <div className="qh-podium">

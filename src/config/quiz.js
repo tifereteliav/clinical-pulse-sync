@@ -4,8 +4,23 @@
 
 import { ROUNDS as PLASTIC_ROUNDS } from './quizzes/plastic2026';
 import { ROUNDS as EDU_ROUNDS } from './quizzes/edu';
+import { ROUNDS as ADI_ROUNDS } from './quizzes/adinegev2026';
 
 export const QUIZZES = [
+  {
+    id: 'adi-negev-2026',
+    name: 'חידון סיום קורס עדי נגב · מחזור ראשון',
+    title: 'חידון סיום קורס עדי נגב',
+    subtitle: 'בינה מלאכותית בעבודת האחות · מחזור ראשון',
+    teams: false,
+    unit: 'משתתפים',
+    joinLabel: 'שם פרטי ושם משפחה',
+    joinPlaceholder: 'למשל: נועה כהן',
+    joinHint: 'בלי הרשמה. השם יופיע על המסך בטבלת המובילים.',
+    maxName: 24,
+    openPlaceholder: 'למשל: אתר הדרכה למטופלים חדשים',
+    rounds: ADI_ROUNDS
+  },
   {
     id: 'plastic-2026',
     name: 'כנס אחיות כירורגיה פלסטית וכוויות · 2026',
