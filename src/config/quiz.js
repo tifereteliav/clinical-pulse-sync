@@ -5,8 +5,23 @@
 import { ROUNDS as PLASTIC_ROUNDS } from './quizzes/plastic2026';
 import { ROUNDS as EDU_ROUNDS } from './quizzes/edu';
 import { ROUNDS as ADI_ROUNDS } from './quizzes/adinegev2026';
+import { ROUNDS as DEV_ROUNDS } from './quizzes/development2026';
 
 export const QUIZZES = [
+  {
+    id: 'development-2026',
+    name: 'בינה מלאכותית לאחים ואחיות: פיתוח',
+    title: 'בינה מלאכותית לאחים ואחיות: פיתוח',
+    subtitle: 'סוכנים, סקילים ובניית אפליקציות',
+    teams: false,
+    unit: 'משתתפים',
+    joinLabel: 'שם פרטי ושם משפחה',
+    joinPlaceholder: 'למשל: נועה כהן',
+    joinHint: 'בלי הרשמה. השם יופיע על המסך בטבלת המובילים.',
+    maxName: 24,
+    openPlaceholder: 'למשל: מחשבון מינונים למחלקה',
+    rounds: DEV_ROUNDS
+  },
   {
     id: 'adi-negev-2026',
     name: 'חידון סיום קורס עדי נגב · מחזור ראשון',
